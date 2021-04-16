@@ -55,19 +55,23 @@ public class PrettyPrint {
         int[] costj = new int[num_words];
         int[] breaks = new int[num_words];
         
-        costj[0] = 0;
-        for(int j = 1; j < num_words; j++) {
+        for(int j = 0; j < num_words; j++) {
             int minimum = bigboi;
             int min_i = 0;
-            for (int i = 1; i <= j; i++) {
-                int exp = costj[j-1] + cost[i][j];
+            for (int i = 0; i <= j; i++) {
+                int exp;
+                if (j == 0) {
+                    exp = 0 + cost[i][j];
+                } else {
+                    exp = costj[j-1] + cost[i][j];
+                }
                 if (exp <= minimum) {
                     minimum = exp;
                     min_i = i;
                 }
             }
             costj[j] = minimum;
-            breaks[j] = min_i;
+            breaks[j] = min_i - 1;
         }
 
         List<Integer> breaksList = new ArrayList<Integer>();
@@ -79,6 +83,7 @@ public class PrettyPrint {
         }
         breaksList.add(num_words-1);
 
+        System.out.println(Arrays.toString(breaks));
         System.out.println(Arrays.toString(breaksList.toArray()));
 
         return breaksList;
@@ -158,7 +163,7 @@ public class PrettyPrint {
         
         List<Integer> breaks = splitWords(lengths, line_length,
             new SlackFunctor() {
-                public double f(int slack) { return slack * slack; }
+                public double f(int slack) { return slack * slack * slack; }
             });
 
         if (breaks != null) {
