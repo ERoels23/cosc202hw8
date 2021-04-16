@@ -5,36 +5,83 @@ public class PrettyPrint {
 
     public static List<Integer> splitWords(int[] lengths, int L, SlackFunctor sf) {
 
-        /* TODO: Add pretty printing implementation here.
-
-            Right now, this is a dummy implementation.
-            It just places words on lines and inserts line breaks whenever the length
-            would exceed line_length.
+        /* TODO: Add pretty printing implementation here.   
+        1. construct slacks[i][j]
+        2. construct cost[i][j]
+        3. construct costj[j] 
+        4. then somehow we construct p[] from that...
         */
 
-        ArrayList<Integer> breaks = new ArrayList<Integer>();
-        int current_length = 0;
-        int current_end = -1;
-        for (int word: lengths) {
-            if (word > L) {
+        // first, make sure no words are greater than L chars long...
+        for (int l: lengths) {
+            if (l > L) {
                 return null;
             }
-
-            if (current_length > 0 && current_length + 1 + word > L) {
-                breaks.add(current_end);
-                current_length = 0;
-            }
-
-            if (current_length > 0)
-                current_length++;
-            current_length += word;
-
-            current_end++;
         }
 
-        breaks.add(current_end);
+        int num_words = lengths.length;
+        int bigboi = 9999;
+        int[][] cost = new int[num_words][num_words];
 
-        return breaks;
+        // construct costs[i][j] array
+        // if words i through j were in one line, how much slack?
+        for (int start = 0; start < num_words; start++) {
+            for (int end = 0; end < num_words; end++) {
+                // for each set of start/end values
+                if (start > end) {
+                    // when start > end, it's meaningless, make it large
+                    cost[start][end] = bigboi;
+                }
+                
+                int spaces = end-start;
+                int chars = 0;
+                // get total length of all the words
+                // TAKE ADVANTAGE OF PREVIOUS ENTRY TO REDUCE TIME COMPLEXITY
+                for (int word = start; word <= end; word++) {
+                    chars += lengths[word];
+                }
+                // if it's too big, insert large number (INF)
+                if (chars+spaces > L) {
+                    cost[start][end] = bigboi;
+                } else {
+                    cost[start][end] = (int) sf.f(L - chars - spaces);
+                }
+            }
+        }
+
+        // construct costj[j] array
+        // calculates optimal (least) amount of slack when placing words 0 through j in multiple lines
+        // costj[j] = min[1<i<j] (costj[j-1] + cost[i][j])
+        int[] costj = new int[num_words];
+        int[] breaks = new int[num_words];
+        
+        costj[0] = 0;
+        for(int j = 1; j < num_words; j++) {
+            int minimum = bigboi;
+            int min_i = 0;
+            for (int i = 1; i <= j; i++) {
+                int exp = costj[j-1] + cost[i][j];
+                if (exp <= minimum) {
+                    minimum = exp;
+                    min_i = i;
+                }
+            }
+            costj[j] = minimum;
+            breaks[j] = min_i;
+        }
+
+        List<Integer> breaksList = new ArrayList<Integer>();
+        int line_start = breaks[num_words-1];
+        while (line_start > 1) {
+            // working backwards, need to reverse the List
+            breaksList.add(0, line_start);
+            line_start = breaks[line_start];
+        }
+        breaksList.add(num_words-1);
+
+        System.out.println(Arrays.toString(breaksList.toArray()));
+
+        return breaksList;
     }
 
     public static String help_message() {
