@@ -5,13 +5,6 @@ public class PrettyPrint {
 
     public static List<Integer> splitWords(int[] lengths, int L, SlackFunctor sf) {
 
-        /* TODO: Add pretty printing implementation here.   
-        1. construct slacks[i][j]
-        2. construct cost[i][j]
-        3. construct costj[j] 
-        4. then somehow we construct p[] from that...
-        */
-
         // first, make sure no words are greater than L chars long...
         for (int l: lengths) {
             if (l > L) {
@@ -21,34 +14,7 @@ public class PrettyPrint {
 
         int num_words = lengths.length;
         int bigboi = 9999;
-        int[][] cost = new int[num_words][num_words];
-
-        // construct costs[i][j] array
-        // if words i through j were in one line, how much slack?
-        for (int start = 0; start < num_words; start++) {
-            for (int end = 0; end < num_words; end++) {
-                // for each set of start/end values
-                if (start > end) {
-                    // when start > end, it's meaningless, make it large
-                    cost[start][end] = bigboi;
-                }
-                
-                int spaces = end-start;
-                int chars = 0;
-                // get total length of all the words
-                // TAKE ADVANTAGE OF PREVIOUS ENTRY TO REDUCE TIME COMPLEXITY
-                for (int word = start; word <= end; word++) {
-                    chars += lengths[word];
-                }
-                // if it's too big, insert large number (INF)
-                if (chars+spaces > L) {
-                    cost[start][end] = bigboi;
-                } else {
-                    cost[start][end] = (int) sf.f(L - chars - spaces);
-                }
-            }
-        }
-
+        
         // construct costj[j] array
         // calculates optimal (least) amount of slack when placing words 0 through j in multiple lines
         // costj[j] = min[1<i<j] (costj[j-1] + cost[i][j])
@@ -61,11 +27,11 @@ public class PrettyPrint {
             for (int i = 0; i <= j; i++) {
                 int exp;
                 if (j == 0) {
-                    exp = 0 + cost[i][j];
+                    exp = 0 + getCost(i, j, lengths, L, sf);
                 } else {
-                    exp = costj[j-1] + cost[i][j];
+                    exp = costj[j-1] + getCost(i, j, lengths, L, sf);
                 }
-                if (exp <= minimum) {
+                if (exp < minimum) {
                     minimum = exp;
                     min_i = i;
                 }
@@ -81,12 +47,34 @@ public class PrettyPrint {
             breaksList.add(0, line_start);
             line_start = breaks[line_start];
         }
+        // this neglects the final word on the final line...
         breaksList.add(num_words-1);
 
         System.out.println(Arrays.toString(breaks));
         System.out.println(Arrays.toString(breaksList.toArray()));
 
         return breaksList;
+    }
+
+    public static int getCost(int start, int end, int[] lengths, int L, SlackFunctor sf) {
+        int bigboi = 9999;
+        // for each set of start/end values
+        if (start > end) {
+            // when start > end, it's meaningless, make it large
+            return bigboi;
+        }
+        int spaces = end-start;
+        int chars = 0;
+        // get total length of all the words
+        for (int word = start; word <= end; word++) {
+            chars += lengths[word];
+        }
+        // if it's too big, insert large number (INF)
+        if (chars+spaces > L) {
+            return bigboi;
+        } else {
+            return (int) sf.f(L - chars - spaces);
+        }
     }
 
     public static String help_message() {
@@ -163,7 +151,7 @@ public class PrettyPrint {
         
         List<Integer> breaks = splitWords(lengths, line_length,
             new SlackFunctor() {
-                public double f(int slack) { return slack * slack * slack; }
+                public double f(int slack) { return slack * slack; }
             });
 
         if (breaks != null) {
