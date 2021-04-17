@@ -24,16 +24,20 @@ public class PrettyPrint {
         for(int j = 0; j < num_words; j++) {
             int minimum = bigboi;
             int min_i = 0;
+            boolean tooLong = false;
             for (int i = 0; i <= j; i++) {
-                int exp;
+                int exp = 0;
                 if (j == 0) {
-                    exp = 0 + getCost(i, j, lengths, L, sf);
-                } else {
+                    exp = getCost(i, j, lengths, L, sf);
+                } else if (!tooLong) {
                     exp = costj[j-1] + getCost(i, j, lengths, L, sf);
                 }
                 if (exp < minimum) {
                     minimum = exp;
                     min_i = i;
+                }
+                if (exp == bigboi) {
+                    tooLong = true;
                 }
             }
             costj[j] = minimum;
