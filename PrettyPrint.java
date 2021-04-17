@@ -25,12 +25,18 @@ public class PrettyPrint {
             int minimum = bigboi;
             int min_i = 0;
             boolean tooLong = false;
+            int runningTotal = 0;
+
             for (int i = 0; i <= j; i++) {
                 int exp = 0;
                 if (j == 0) {
-                    exp = getCost(i, j, lengths, L, sf);
+                    exp = getCost(i, lengths, L);
+                    runningTotal += exp;
+                    exp = (int) sf.f(exp);
                 } else if (!tooLong) {
-                    exp = costj[j-1] + getCost(i, j, lengths, L, sf);
+                    exp = costj[j-1] + runningTotal + getCost(i, lengths, L);
+                    runningTotal += exp;
+                    exp = (int) sf.f(exp);
                 }
                 if (exp < minimum) {
                     minimum = exp;
@@ -60,24 +66,14 @@ public class PrettyPrint {
         return breaksList;
     }
 
-    public static int getCost(int start, int end, int[] lengths, int L, SlackFunctor sf) {
+    public static int getCost(int ind, int[] lengths, int L) {
         int bigboi = 9999;
-        // for each set of start/end values
-        if (start > end) {
-            // when start > end, it's meaningless, make it large
-            return bigboi;
-        }
-        int spaces = end-start;
-        int chars = 0;
-        // get total length of all the words
-        for (int word = start; word <= end; word++) {
-            chars += lengths[word];
-        }
+        int chars = lengths[ind];
         // if it's too big, insert large number (INF)
-        if (chars+spaces > L) {
+        if (chars+1 > L) {
             return bigboi;
         } else {
-            return (int) sf.f(L - chars - spaces);
+            return L - chars - 1;
         }
     }
 
